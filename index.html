@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kie-Chan!</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js",
+        "three/addons/": "./node_modules/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Top Floating Controls -->
+  <header class="top-bar" id="top-bar">
+    <div class="title-group" id="title-group" title="Arraste para mover a janela">
+      <span class="icon">🌸</span>
+      <span id="header-waifu-name">Kie-chan</span>
+    </div>
+    <div class="top-bar-actions">
+      <button class="icon-btn active" id="btn-look-mouse" title="Olhar para o Mouse [O]">👀</button>
+      <button class="icon-btn" id="btn-tasks" title="Quadro de Tarefas & Anti-Procrastinação [T]">📋</button>
+      <button class="icon-btn" id="btn-mute" title="Modo Mudo (Ativar/Desativar voz) [M]">🔊</button>
+      <button class="icon-btn" id="btn-history" title="Ver Histórico de Conversa [H]">📜</button>
+      <button class="icon-btn" id="btn-mic-top" title="Gravar Áudio / Falar">🎙️</button>
+      <button class="icon-btn" id="btn-zoom-out" title="Diminuir (Zoom -)">➖</button>
+      <button class="icon-btn" id="btn-zoom-in" title="Aumentar (Zoom +)">➕</button>
+      <button class="icon-btn" id="btn-reset-cam" title="Resetar Posição">🔄</button>
+      <button class="icon-btn active" id="btn-pin" title="Fixar no Topo (Always on Top)">📌</button>
+      <button class="icon-btn" id="btn-settings" title="Configurações">⚙️</button>
+      <button class="icon-btn" id="btn-minimize" title="Minimizar">🗕</button>
+      <button class="icon-btn close-btn" id="btn-close" title="Fechar">✖</button>
+    </div>
+  </header>
+
+  <!-- 3D Canvas Viewport -->
+  <div id="canvas-container"></div>
+
+  <!-- Anime Yellow Subtitles (Legenda Amarela com borda branca e destaque por palavra) -->
+  <div class="subtitles-container hidden" id="subtitles-container">
+    <!-- Palavras inseridas dinamicamente aqui -->
+  </div>
+
+  <!-- Thinking Indicator -->
+  <div class="thinking-indicator" id="thinking-indicator">
+    <div class="thinking-dots">
+      <div class="thinking-dot"></div>
+      <div class="thinking-dot"></div>
+      <div class="thinking-dot"></div>
+    </div>
+    <span id="thinking-text">Kie-chan pensando...</span>
+  </div>
+
+  <!-- Active Recording Audio Pill -->
+  <div class="recording-pill" id="recording-pill">
+    <div class="wave-bars">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+    <span>Gravando voz... <span id="recording-timer">00:00</span></span>
+    <button class="cmd-btn" id="btn-stop-recording-pill" style="width: 22px; height: 22px; margin-left: 6px;">⏹️</button>
+  </div>
+
+  <!-- Sleek Floating Command Bar (Pressione '/' para abrir) -->
+  <div class="command-bar hidden" id="command-bar">
+    <div class="command-container">
+      <!-- Attachment preview tag -->
+      <div class="attachment-preview hidden" id="attachment-preview">
+        <span class="attachment-badge">
+          <span id="attachment-icon">📎</span>
+          <span id="attachment-name">arquivo.png</span>
+          <button type="button" id="btn-remove-attachment" title="Remover anexo">✕</button>
+        </span>
+      </div>
+
+      <div class="command-box">
+        <span class="cmd-icon">🌸</span>
+        <input type="text" id="prompt-input" placeholder="Fale com a Kie-chan... (Enter envia, Esc fecha, Ctrl+V anexa)" autocomplete="off">
+        <input type="file" id="file-input" style="display: none;" accept="image/*,.txt,.pdf,.js,.py,.json,.html,.css,.md,.csv,.ts">
+        <button class="cmd-btn" id="btn-attach" title="Anexar arquivo ou imagem (ou cole com Ctrl+V)">📎</button>
+        <button class="cmd-btn" id="btn-cmd-history" title="Ver Histórico de Diálogo [H]">📜</button>
+        <button class="cmd-btn" id="btn-cmd-settings" title="Configurações [S]">⚙️</button>
+        <button class="cmd-btn" id="btn-prompt-mic" title="Falar por voz">🎙️</button>
+        <button class="cmd-btn primary" id="btn-prompt-send" title="Enviar">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Hint -->
+  <div class="bottom-hint" id="bottom-hint">
+    <kbd>/</kbd> Conversar | <kbd>S</kbd> Configs | <kbd>👀</kbd> Mouse | <kbd>T</kbd> Tarefas | <kbd>H</kbd> Histórico | <kbd>M</kbd> Mudo
+  </div>
+
+  <!-- History Modal Overlay -->
+  <div class="history-modal-overlay" id="history-modal">
+    <div class="history-card">
+      <div class="history-header">
+        <div class="history-title-group">
+          <h3>📜 Histórico de Diálogo</h3>
+          <span class="history-badge" id="history-count-badge">0 mensagens</span>
+        </div>
+        <button class="icon-btn" id="btn-close-history">✕</button>
+      </div>
+      <div class="history-body" id="history-list">
+        <!-- Messages rendered dynamically -->
+      </div>
+      <div class="history-footer">
+        <button class="btn btn-danger" id="btn-clear-history">🗑️ Limpar Memória</button>
+        <button class="btn btn-secondary" id="btn-dismiss-history">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasks & Anti-Procrastination Modal Overlay -->
+  <div class="tasks-modal-overlay" id="tasks-modal">
+    <div class="tasks-card">
+      <div class="tasks-header">
+        <div class="tasks-title-group">
+          <h3>📋 Tarefas & Anti-Procrastinação</h3>
+          <span class="tasks-badge" id="tasks-count-badge">0 pendentes</span>
+        </div>
+        <button class="icon-btn" id="btn-close-tasks">✕</button>
+      </div>
+
+      <!-- Anti-Procrastination Banner -->
+      <div class="procrastination-banner">
+        <div class="proc-info">
+          <strong>🛡️ Cobrança Anti-Procrastinação</strong>
+          <span>Se você abrir YouTube, Crunchyroll ou Discord, a Kie-chan vai te cobrar!</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-anti-proc" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <!-- Add Task Form -->
+      <div class="task-add-section">
+        <div class="task-input-row">
+          <input type="text" id="new-task-title" placeholder="O que você precisa fazer hoje? (ex: Trabalho de Biologia)...">
+        </div>
+        <div class="task-date-row">
+          <label for="new-task-deadline">⏰ Prazo:</label>
+          <input type="date" id="new-task-deadline">
+          <button class="btn btn-primary" id="btn-add-task">+ Adicionar</button>
+        </div>
+      </div>
+
+      <!-- Task List Items -->
+      <div class="tasks-body" id="tasks-list">
+        <!-- Dynamic tasks rendered here -->
+      </div>
+
+      <div class="tasks-footer">
+        <span class="tasks-tip">🌸 Ela vai te dar os parabéns quando você concluir!</span>
+        <button class="btn btn-secondary" id="btn-dismiss-tasks">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⚙️ Configurações</h3>
+        <button class="icon-btn" id="btn-close-settings">✕</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="tab-btn active" data-tab="tab-api">🤖 IA & Kie.ai</button>
+        <button class="tab-btn" data-tab="tab-audio">🎙️ Legenda & Áudio</button>
+        <button class="tab-btn" data-tab="tab-waifu">🌸 Personagem</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- TAB 1: API DeepSeek Kie.ai -->
+        <div class="tab-content active" id="tab-api">
+          <div class="form-group">
+            <label>Chave de API (Kie.ai Bearer Token):</label>
+            <input type="password" id="cfg-api-key" placeholder="Ex: kie_live_xxxxxxxxxxxxxxxx">
+            <div class="hint">Obtenha sua chave no painel do kie.ai (kie.ai/api-key)</div>
+          </div>
+
+          <div class="form-group">
+            <label>Base URL da Kie.ai:</label>
+            <input type="text" id="cfg-base-url" value="https://api.kie.ai">
+            <div class="hint">Base da API: https://api.kie.ai</div>
+          </div>
+
+          <div class="form-group">
+            <label>Endpoint (POST):</label>
+            <input type="text" id="cfg-endpoint-path" value="/openai/v1/responses">
+            <div class="hint">Configurado: POST /openai/v1/responses</div>
+          </div>
+
+          <div class="form-group">
+            <label>Modelo:</label>
+            <input type="text" id="cfg-model" value="deepseek-v4-1-flash">
+            <div class="hint">Modelo oficial: deepseek-v4-1-flash</div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Subtitle & Audio -->
+        <div class="tab-content" id="tab-audio">
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="cfg-mute-toggle" style="width: auto;">
+              Modo Mudo Ativado (Silenciar voz da waifu)
+            </label>
+            <div class="hint">As legendas amarelas continuarão aparecendo normalmente na tela!</div>
+          </div>
+
+          <div class="form-group">
+            <label>Voz Neural Feminina (Edge TTS):</label>
+            <select id="cfg-edge-voice">
+              <option value="pt-BR-FranciscaNeural">Francisca (Neural - Feminina, Expressiva & Doce)</option>
+              <option value="pt-BR-ThalitaMultilingualNeural">Thalita (Neural - Jovem, Alegre & Fofa)</option>
+              <option value="ja-JP-NanamiNeural">Nanami (Neural - Voz Anime Japonesa)</option>
+            </select>
+            <div class="hint">Vozes 100% humanas gravadas por atrizes de voz via IA da Microsoft.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Tom da Voz Anime (Pitch): <span id="edge-pitch-val">+18Hz (Fofa)</span></label>
+            <select id="cfg-edge-pitch">
+              <option value="+0Hz">Normal (+0Hz)</option>
+              <option value="+10Hz">Suave (+10Hz)</option>
+              <option value="+18Hz" selected>Anime Fofa (+18Hz - Recomendado)</option>
+              <option value="+25Hz">Aguda / Tsundere (+25Hz)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Velocidade de Leitura da Legenda: <span id="sub-speed-val">Mais Lenta (Confortável)</span></label>
+            <input type="range" id="cfg-sub-speed" min="0.6" max="1.5" step="0.1" value="0.9">
+            <div class="hint">Diminua para dar mais tempo de ler cada palavra com calma.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Reconhecimento de Áudio / Entrada:</label>
+            <select id="cfg-stt-provider">
+              <option value="webspeech">Nativo (Web Speech API - Grátis, Instantâneo em PT-BR)</option>
+              <option value="custom_api">Modelo / API Externa de Transcrição (Whisper / Kie.ai)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="group-custom-stt" style="display: none;">
+            <label>Endpoint de Áudio Customizado (STT):</label>
+            <input type="text" id="cfg-stt-url" placeholder="https://api.kie.ai/v1/audio/transcriptions ou URL do Whisper">
+            <div class="hint">Quando encontrar seu modelo de áudio, insira o endpoint aqui!</div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Character & Personality -->
+        <div class="tab-content" id="tab-waifu">
+          <div class="form-group">
+            <label>Nome da Personagem:</label>
+            <input type="text" id="cfg-waifu-name" value="Kie-chan">
+          </div>
+
+          <div class="form-group">
+            <label>Prompt do Sistema (Personalidade Tsundere):</label>
+            <textarea id="cfg-system-prompt"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Tamanho Inicial do Modelo 3D: <span id="scale-val">1.0</span>x</label>
+            <input type="range" id="cfg-model-scale" min="0.4" max="2.5" step="0.1" value="1.0">
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="cfg-look-mouse" checked>
+              <span>👀 Seguir cursor do mouse com a cabeça</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="cfg-anti-proc" checked>
+              <span>🛡️ Cobrança Anti-Procrastinação ativa</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-settings">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-settings">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Neutralinojs Client & Bridge (Active when running via Neutralino, zero impact on Electron) -->
+  <script src="__neutralino_globals.js"></script>
+  <script src="neutralino.js"></script>
+  <script src="neutralino-bridge.js"></script>
+
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

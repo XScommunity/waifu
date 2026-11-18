@@ -1,0 +1,20 @@
+{
+  "name": "kie-chan",
+  "productName": "Kie-Chan!",
+  "version": "1.0.0",
+  "description": "Kie-Chan! Waifu Desktop Companion with DeepSeek V4.1 Flash via Kie.ai",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "neu": "npx @neutralinojs/neu run",
+    "neu:build": "npx @neutralinojs/neu build",
+    "web": "node server.js"
+  },
+  "keywords": ["waifu", "ai", "deepseek", "kie.ai", "overlay", "threejs", "electron"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^45.3.3",
+    "three": "^0.187.0"
+  }
+}
